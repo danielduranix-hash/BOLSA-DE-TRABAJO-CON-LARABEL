@@ -1,0 +1,341 @@
+/* ==========================================================================
+   ESTILOS ENCAPSULADOS PARA EL GENERADOR DE CV
+   ========================================================================== */
+
+.generador-cv-wrapper {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  box-sizing: border-box;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  color: #1f2937;
+}
+
+/* BARRA DE PROGRESO superior */
+.generador-cv-wrapper .top-progress-container {
+  margin-bottom: 24px;
+}
+
+.generador-cv-wrapper .progress-bar-wrapper {
+  width: 100%;
+  height: 8px;
+  background-color: #e5e7eb;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.generador-cv-wrapper .progress-bar {
+  height: 100%;
+  background-color: var(--cv-theme-color, #2563eb);
+  transition: width 0.3s ease;
+}
+
+.generador-cv-wrapper .progress-info {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.875rem;
+  color: #4b5563;
+}
+
+/* ESTRUCTURA PRINCIPAL (FORMULARIO Y PREVISUALIZACIÓN) */
+.generador-cv-wrapper .main-layout {
+  display: grid;
+  grid-template-columns: 200px 1fr 1.1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+@media (max-width: 1024px) {
+  .generador-cv-wrapper .main-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* SIDEBAR DE NAVEGACIÓN */
+.generador-cv-wrapper .sidebar-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.generador-cv-wrapper .nav-item {
+  text-align: left;
+  padding: 10px 14px;
+  border-radius: 6px;
+  background: #f3f4f6;
+  border: 1px solid transparent;
+  color: #374151;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.generador-cv-wrapper .nav-item:hover {
+  background: #e5e7eb;
+}
+
+.generador-cv-wrapper .nav-item.active {
+  background: var(--cv-theme-color, #2563eb);
+  color: #ffffff;
+}
+
+/* FORMULARIO */
+.generador-cv-wrapper .form-container {
+  background: #ffffff;
+  padding: 24px;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  border: 1px solid #e5e7eb;
+}
+
+.generador-cv-wrapper .step-content h3 {
+  margin-top: 0;
+  margin-bottom: 20px;
+  font-size: 1.25rem;
+  color: #111827;
+  font-weight: 600;
+}
+
+.generador-cv-wrapper .form-group {
+  margin-bottom: 16px;
+}
+
+.generador-cv-wrapper .form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+@media (max-width: 640px) {
+  .generador-cv-wrapper .form-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.generador-cv-wrapper label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 6px;
+}
+
+.generador-cv-wrapper input[type="text"],
+.generador-cv-wrapper input[type="email"],
+.generador-cv-wrapper input[type="tel"],
+.generador-cv-wrapper input[type="date"],
+.generador-cv-wrapper textarea,
+.generador-cv-wrapper select.custom-select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  box-sizing: border-box;
+}
+
+.generador-cv-wrapper input:focus,
+.generador-cv-wrapper textarea:focus,
+.generador-cv-wrapper select:focus {
+  outline: none;
+  border-color: var(--cv-theme-color, #2563eb);
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+}
+
+.generador-cv-wrapper .button-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.generador-cv-wrapper .btn-voice,
+.generador-cv-wrapper .btn-ai {
+  padding: 6px 12px;
+  font-size: 0.75rem;
+  border-radius: 4px;
+  border: 1px solid #d1d5db;
+  background: #f9fafb;
+  cursor: pointer;
+}
+
+.generador-cv-wrapper .btn-voice.listening {
+  background: #fee2e2;
+  border-color: #ef4444;
+  color: #991b1b;
+}
+
+.generador-cv-wrapper .btn-ai {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+  color: #1e40af;
+  font-weight: 600;
+}
+
+.generador-cv-wrapper .form-navigation {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.generador-cv-wrapper .btn-primary {
+  background-color: var(--cv-theme-color, #2563eb);
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.generador-cv-wrapper .btn-secondary {
+  background-color: #ffffff;
+  color: #374151;
+  border: 1px solid #d1d5db;
+  padding: 10px 20px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.generador-cv-wrapper .btn-large {
+  width: 100%;
+  padding: 14px;
+  font-size: 1rem;
+}
+
+/* IDIOMAS */
+.generador-cv-wrapper .idioma-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+/* TEMPLATES Y DISEÑOS */
+.generador-cv-wrapper .templates-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.generador-cv-wrapper .template-card {
+  border: 2px solid #e5e7eb;
+  padding: 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  text-align: center;
+}
+
+.generador-cv-wrapper .template-card.active {
+  border-color: var(--cv-theme-color, #2563eb);
+  background: #f0f9ff;
+}
+
+.generador-cv-wrapper .template-card input {
+  display: none;
+}
+
+/* PREVISUALIZACIÓN DE HOJA CV (HOJA A4) */
+.generador-cv-wrapper .preview-container {
+  position: sticky;
+  top: 20px;
+}
+
+.generador-cv-wrapper .cv-paper {
+  background: #ffffff;
+  padding: 32px;
+  border-radius: 4px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  border: 1px solid #e5e7eb;
+  min-height: 600px;
+  font-size: 0.85rem;
+}
+
+.generador-cv-wrapper .cv-header h1 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: var(--cv-theme-color, #2563eb);
+  text-transform: uppercase;
+}
+
+.generador-cv-wrapper .cv-header h2 {
+  margin: 4px 0 12px 0;
+  font-size: 1rem;
+  color: #4b5563;
+  font-weight: 500;
+}
+
+.generador-cv-wrapper .cv-contact-info,
+.generador-cv-wrapper .cv-birthdate {
+  font-size: 0.75rem;
+  color: #6b7280;
+  margin-bottom: 12px;
+}
+
+.generador-cv-wrapper .cv-section {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.generador-cv-wrapper .cv-section h3 {
+  margin: 0 0 8px 0;
+  font-size: 0.95rem;
+  color: var(--cv-theme-color, #2563eb);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.generador-cv-wrapper .preserve-whitespace {
+  white-space: pre-line;
+  margin: 0;
+  color: #374151;
+  line-height: 1.4;
+}
+
+.generador-cv-wrapper .cv-list {
+  margin: 0;
+  padding-left: 18px;
+  color: #374151;
+}
+
+/* VARIACIONES DE TEMPLATES */
+.generador-cv-wrapper .cv-paper.t-moderno {
+  border-top: 8px solid var(--cv-theme-color, #2563eb);
+}
+
+.generador-cv-wrapper .cv-paper.t-minimalista {
+  font-family: Georgia, serif;
+}
+
+/* ==========================================================================
+   REGLAS DE IMPRESIÓN (AISLADAS)
+   ========================================================================== */
+@media print {
+  /* Ocultar elementos generales de la web */
+  body * {
+    visibility: hidden;
+  }
+
+  /* Hacer visible exclusivamente la hoja de CV */
+  .generador-cv-wrapper #cvPaper,
+  .generador-cv-wrapper #cvPaper * {
+    visibility: visible;
+  }
+
+  .generador-cv-wrapper #cvPaper {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 20px;
+    box-shadow: none;
+    border: none;
+  }
+}

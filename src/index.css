@@ -1,0 +1,171 @@
+/* ==========================================================================
+   1. IMPORTACIONES Y CONFIGURACIÓN TAILWIND V4
+   ========================================================================== */
+@import url('https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400;1,700&family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-principal: 'Montserrat', sans-serif;
+  --font-lectura: 'Atkinson Hyperlegible', sans-serif;
+
+  /* Colores Oficiales Institucionales Mérida */
+  --color-brand-navy: #0d3c75;
+  --color-brand-deep: #0a2a52;
+  --color-brand-blue: #1e3a8a;
+  --color-brand-sky: #38bdf8;
+  --color-brand-emerald: #10b981;
+  --color-brand-accentGreen: #70be3b;
+  --color-brand-amber: #f59e0b;
+  --color-brand-softBg: #f8fafc;
+
+  /* Bordes y Sombras de la Maqueta */
+  --radius-4xl: 2rem;
+  --radius-5xl: 2.5rem;
+  --shadow-soft-xl: 0 20px 40px -15px rgba(13, 60, 117, 0.08);
+  --shadow-glow-blue: 0 10px 25px -5px rgba(13, 60, 117, 0.35);
+}
+
+/* ==========================================================================
+   2. BASE & RESET
+   ========================================================================== */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-principal);
+  background-color: #f8fafc;
+  color: #1e293b;
+  margin: 0;
+  padding: 0;
+}
+
+/* ==========================================================================
+   3. ESTILOS ESPECÍFICOS DEL INDEX (CLASES EXACTAS DEL HTML)
+   ========================================================================== */
+
+/* Superposición del Hero */
+.hero-bg-overlay {
+  background: linear-gradient(105deg, rgba(248, 250, 252, 0.98) 0%, rgba(248, 250, 252, 0.92) 50%, rgba(248, 250, 252, 0.4) 100%);
+}
+
+/* Banner de CV con IA */
+.cv-banner-card {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 20px 40px -15px rgba(13, 60, 117, 0.08);
+}
+
+/* Rejilla de Agenda Municipal */
+.sectores-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1.25rem;
+}
+
+.sector-card {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 1.5rem;
+  padding: 1.25rem;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.sector-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 25px -5px rgba(13, 60, 117, 0.1);
+}
+
+/* Menú Flotante Lateral */
+.floating-menu {
+  position: fixed;
+  right: 1rem;
+  top: 35%;
+  z-index: 30;
+}
+
+/* ==========================================================================
+   4. PANEL Y BOTÓN DE ACCESIBILIDAD FLOTANTE (AISLADO)
+   ========================================================================== */
+.btn-accesibilidad-flotante {
+  position: fixed !important;
+  bottom: 2rem !important;
+  right: 1.25rem !important;
+  width: 56px !important;
+  height: 56px !important;
+  background-color: #0d3c75 !important;
+  color: #ffffff !important;
+  border: none !important;
+  border-radius: 50% !important;
+  font-size: 1.5rem !important;
+  box-shadow: 0 10px 25px -5px rgba(13, 60, 117, 0.4) !important;
+  z-index: 9999 !important;
+  cursor: pointer;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.panel-accesibilidad {
+  position: fixed !important;
+  bottom: 6rem !important;
+  right: 1.25rem !important;
+  width: 340px !important;
+  background-color: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 1rem !important;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1) !important;
+  padding: 1.25rem !important;
+  z-index: 9998 !important;
+}
+
+/* Aislamiento de accesibilidad para no desconfigurar el layout */
+body.texto-facil * {
+  font-family: var(--font-lectura) !important;
+}
+
+
+
+
+/* ==========================================================================
+   AJUSTE DE ENCABEZADO Y UTILIDADES TAILWIND V4 PARA COMMON
+   ========================================================================== */
+
+/* Extensión de colores e interacción del encabezado */
+@layer utilities {
+  .header-blur {
+    background-color: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+}
+
+/* Sombra y estilo del botón institucional "GeoPortal de Empleos" */
+.btn-empleos,
+header a[href*="geoportal"],
+header button:has(svg) {
+  transition: all 0.2s ease-in-out;
+}
+
+/* Menú desplegable flotante de usuario (Alineación libre de colisiones) */
+.user-menu-card,
+[class*="user-menu"] {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  z-index: 50;
+}
+
+
+/* ==========================================================================
+   HERO / BANNER PRINCIPAL DE INICIO
+   ========================================================================== */
+.hero-title-accent {
+  color: #70be3b !important;
+}
+
+.hero-badge-pill {
+  background-color: rgba(112, 190, 59, 0.1);
+  border: 1px solid rgba(112, 190, 59, 0.3);
+  color: #589b2c;
+}
