@@ -12,6 +12,6 @@ export default defineConfig({
     alias: {
       '@': path.resolve(import.meta.dirname, './src'),
     },
-    extensions: ['.js', '.jsx', '.ts', '.tsx', '.json'],
+    extensions: ['.js', '.jsx', '.ts', '.tsx', '.json', '.css', '.scss', 'mjs', '.mjs'],
   },
 });

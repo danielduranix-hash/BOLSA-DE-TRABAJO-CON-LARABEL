@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import "../../styles/formulario-cv.css";
 
 // 1. DICCIONARIOS Y CONFIGURACIÓN GLOBAL
@@ -21,14 +21,28 @@ const TITULOS_PASOS = [
   "7. Elige el diseño de tu CV"
 ];
 
+// Obtención limpia de la clave de LocalStorage
+const getStorageKey = () => {
+  const usuarioGuardado = localStorage.getItem("usuarioActivo") || sessionStorage.getItem("usuarioActivo");
+  if (usuarioGuardado) {
+    try {
+      const user = JSON.parse(usuarioGuardado);
+      const idUnico = user.curp || user.correo || user.id;
+      if (idUnico) return `progresoCV_${idUnico.toString().toLowerCase().trim()}`;
+    } catch (e) {
+      console.error("Error leyendo usuario de sesión:", e);
+    }
+  }
+  return "cv_builder_draft";
+};
+
 export default function GeneradorCv() {
-  // 2. ESTADO GENERAL
+  // 2. ESTADOS
   const [pasoActual, setPasoActual] = useState(1);
   const [loadingAI, setLoadingAI] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [activeVoiceTarget, setActiveVoiceTarget] = useState(null);
 
-  // Datos del Formulario
   const [formData, setFormData] = useState({
     idiomaCv: "es",
     nombre: "",
@@ -53,22 +67,13 @@ export default function GeneradorCv() {
     idiomas: [{ nombre: "Español", nivel: "Nativo" }]
   });
 
-  // Clave dinámica para LocalStorage
-  const getStorageKey = () => {
-    const usuarioGuardado = localStorage.getItem("usuarioActivo") || sessionStorage.getItem("usuarioActivo");
-    if (usuarioGuardado) {
-      try {
-        const user = JSON.parse(usuarioGuardado);
-        const idUnico = user.curp || user.correo || user.id;
-        if (idUnico) return `progresoCV_${idUnico.toString().toLowerCase().trim()}`;
-      } catch (e) {
-        console.error("Error leyendo usuario de sesión:", e);
-      }
-    }
-    return "cv_builder_draft";
-  };
+  // Referencia para mantener una foto actualizada del estado al desmontar/recargar la página
+  const stateRef = useRef({ formData, pasoActual });
+  useEffect(() => {
+    stateRef.current = { formData, pasoActual };
+  }, [formData, pasoActual]);
 
-  // Cargar datos guardados al montar
+  // Cargar borrador o autocompletar datos al montar
   useEffect(() => {
     const key = getStorageKey();
     const draft = localStorage.getItem(key);
@@ -76,8 +81,9 @@ export default function GeneradorCv() {
     if (draft) {
       try {
         const data = JSON.parse(draft);
-        setFormData((prev) => ({ ...prev, ...data }));
-        if (data.pasoActual) setPasoActual(data.pasoActual);
+        const { pasoActual: pasoGuardado, ...restoFormData } = data;
+        setFormData((prev) => ({ ...prev, ...restoFormData }));
+        if (pasoGuardado) setPasoActual(pasoGuardado);
       } catch (e) {
         console.error("Error restaurando borrador:", e);
       }
@@ -100,11 +106,28 @@ export default function GeneradorCv() {
     }
   }, []);
 
-  // Guardar cambios en LocalStorage
+  // Guardar en LocalStorage cada vez que cambien los datos o el paso
   useEffect(() => {
     const key = getStorageKey();
     localStorage.setItem(key, JSON.stringify({ ...formData, pasoActual }));
   }, [formData, pasoActual]);
+
+  // Forzar el guardado cuando el usuario cierra o navega fuera de la pestaña
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      const key = getStorageKey();
+      localStorage.setItem(key, JSON.stringify({
+        ...stateRef.current.formData,
+        pasoActual: stateRef.current.pasoActual
+      }));
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+      handleBeforeUnload(); 
+    };
+  }, []);
 
   // Manejador de entradas de texto
   const handleChange = (e) => {
@@ -143,12 +166,14 @@ export default function GeneradorCv() {
   };
 
   const handleIdiomaChange = (index, field, value) => {
-    const nuevosIdiomas = [...formData.idiomas];
-    nuevosIdiomas[index][field] = value;
-    setFormData((prev) => ({ ...prev, idiomas: nuevosIdiomas }));
+    setFormData((prev) => {
+      const nuevosIdiomas = [...prev.idiomas];
+      nuevosIdiomas[index] = { ...nuevosIdiomas[index], [field]: value };
+      return { ...prev, idiomas: nuevosIdiomas };
+    });
   };
 
-  // Optimización IA (FastAPI)
+  // Optimización con IA (Conectado a FastAPI en puerto 8000)
   const optimizarConIA = async (fieldTarget, seccion) => {
     const textoOriginal = formData[fieldTarget]?.trim();
     if (!textoOriginal) {
@@ -165,42 +190,34 @@ export default function GeneradorCv() {
     if (!confirmar) return;
 
     setLoadingAI(true);
-    const reglasFormato = {
-      experiencia: "Resume en máximo 5 puntos (bullet points) profesionales y concisos.",
-      formacion: "Resume en máximo 2 líneas claras (Título, Institución, Año).",
-      competencias: "Presenta una lista breve de competencias clave (máximo 6).",
-      actividades: "Resume en máximo 2 puntos breves las actividades o logros principales."
-    };
-
-    const promptRestringido = `${reglasFormato[seccion] || "Sé conciso y breve."}\n\nTexto original:\n${textoOriginal}`;
 
     try {
-      const response = await fetch("http://127.0.0.1:8000/api/mejorar-cv", {
+      const response = await fetch("http://localhost:8000/api/mejorar-cv", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          texto: promptRestringido,
-          seccion: seccion,
+          texto: textoOriginal,
+          seccion: seccion, // Coincide con las claves que espera FastAPI
           idioma: formData.idiomaCv
         })
       });
 
       const data = await response.json();
       if (response.ok) {
-        const textoLimpio = data.resultado.replace(/\*\*/g, "");
+        const textoLimpio = data.resultado.replace(/\*\*/g, "").trim();
         setFormData((prev) => ({ ...prev, [fieldTarget]: textoLimpio }));
       } else {
         alert("Error del Servidor: " + (data.detail || "No se pudo optimizar el texto."));
       }
     } catch (err) {
       console.error("Error de conexión:", err);
-      alert("No se pudo conectar con el servidor de IA (http://127.0.0.1:8000).");
+      alert("No se pudo conectar con el servidor de IA (http://localhost:8000). Asegúrate de que FastAPI esté encendido.");
     } finally {
       setLoadingAI(false);
     }
   };
 
-  // Reconocimiento de Voz
+  // Reconocimiento de voz (Web Speech API)
   const handleVoiceInput = (targetField) => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
@@ -248,7 +265,7 @@ export default function GeneradorCv() {
     recognition.start();
   };
 
-  // Descargar PDF usando el diálogo de impresión nativo del navegador
+  // Imprimir / Descargar PDF
   const descargarPDF = () => {
     window.print();
   };
@@ -372,7 +389,7 @@ export default function GeneradorCv() {
                     <button type="button" className={`btn-voice ${isListening && activeVoiceTarget === "perfilProfesional" ? "listening" : ""}`} onClick={() => handleVoiceInput("perfilProfesional")}>
                       {isListening && activeVoiceTarget === "perfilProfesional" ? "🛑 Detener" : "🎤 Hablar"}
                     </button>
-                    <button type="button" className="btn-ai" disabled={loadingAI} onClick={() => optimizarConIA("perfilProfesional", "experiencia")}>
+                    <button type="button" className="btn-ai" disabled={loadingAI} onClick={() => optimizarConIA("perfilProfesional", "Experiencia")}>
                       ✨ Optimizar con IA
                     </button>
                   </div>
@@ -405,7 +422,7 @@ export default function GeneradorCv() {
                     <button type="button" className={`btn-voice ${isListening && activeVoiceTarget === "experienciaTexto" ? "listening" : ""}`} onClick={() => handleVoiceInput("experienciaTexto")}>
                       {isListening && activeVoiceTarget === "experienciaTexto" ? "🛑 Detener" : "🎤 Hablar"}
                     </button>
-                    <button type="button" className="btn-ai" disabled={loadingAI} onClick={() => optimizarConIA("experienciaTexto", "experiencia")}>
+                    <button type="button" className="btn-ai" disabled={loadingAI} onClick={() => optimizarConIA("experienciaTexto", "Experiencia")}>
                       ✨ Optimizar con IA
                     </button>
                   </div>
@@ -424,7 +441,7 @@ export default function GeneradorCv() {
                     <button type="button" className={`btn-voice ${isListening && activeVoiceTarget === "formacionTexto" ? "listening" : ""}`} onClick={() => handleVoiceInput("formacionTexto")}>
                       {isListening && activeVoiceTarget === "formacionTexto" ? "🛑 Detener" : "🎤 Hablar"}
                     </button>
-                    <button type="button" className="btn-ai" disabled={loadingAI} onClick={() => optimizarConIA("formacionTexto", "formacion")}>
+                    <button type="button" className="btn-ai" disabled={loadingAI} onClick={() => optimizarConIA("formacionTexto", "Formacion")}>
                       ✨ Optimizar con IA
                     </button>
                   </div>
@@ -443,7 +460,7 @@ export default function GeneradorCv() {
                     <button type="button" className={`btn-voice ${isListening && activeVoiceTarget === "competenciasTexto" ? "listening" : ""}`} onClick={() => handleVoiceInput("competenciasTexto")}>
                       {isListening && activeVoiceTarget === "competenciasTexto" ? "🛑 Detener" : "🎤 Hablar"}
                     </button>
-                    <button type="button" className="btn-ai" disabled={loadingAI} onClick={() => optimizarConIA("competenciasTexto", "competencias")}>
+                    <button type="button" className="btn-ai" disabled={loadingAI} onClick={() => optimizarConIA("competenciasTexto", "Competencias")}>
                       ✨ Optimizar con IA
                     </button>
                   </div>
@@ -504,7 +521,7 @@ export default function GeneradorCv() {
                     <button type="button" className={`btn-voice ${isListening && activeVoiceTarget === "actividadesTexto" ? "listening" : ""}`} onClick={() => handleVoiceInput("actividadesTexto")}>
                       {isListening && activeVoiceTarget === "actividadesTexto" ? "🛑 Detener" : "🎤 Hablar"}
                     </button>
-                    <button type="button" className="btn-ai" disabled={loadingAI} onClick={() => optimizarConIA("actividadesTexto", "actividades")}>
+                    <button type="button" className="btn-ai" disabled={loadingAI} onClick={() => optimizarConIA("actividadesTexto", "Actividades")}>
                       ✨ Optimizar con IA
                     </button>
                   </div>
