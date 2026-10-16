@@ -339,3 +339,34 @@
     border: none;
   }
 }
+
+/* ==========================================================================
+   OCULTAR WIDGETS Y ASISTENTES FLOTANTES EXTERNOS EN EL GENERADOR
+   ========================================================================== */
+
+/* Oculta los contenedores flotantes comunes de guías virtuales/bots */
+[class*="guia-virtual"],
+[class*="assistant-widget"],
+[id*="guia-virtual"],
+[id*="bot-container"],
+.floating-widget,
+.tour-step-bubble {
+  display: none !important;
+  pointer-events: none !important;
+}
+
+/* Previene que modales o elementos flotantes interfieran con los clics */
+.generador-cv-wrapper {
+  position: relative;
+  z-index: 10;
+}
+
+.generador-cv-wrapper {
+  position: relative;
+  z-index: 1;
+}
+
+/* El botón flotante o asistente se mantiene por encima cuando se activa */
+.fixed.z-50 {
+  z-index: 50;
+}

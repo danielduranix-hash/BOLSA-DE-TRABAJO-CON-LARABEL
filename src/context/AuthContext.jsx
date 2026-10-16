@@ -1,7 +1,7 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState } from 'react';
 
 const AuthContext = createContext();
-const API_URL = 'http://localhost:3000/api';
+const API_URL = 'http://localhost:8000/api'; 
 
 export const AuthProvider = ({ children }) => {
   const [usuario, setUsuario] = useState(() => {
@@ -25,9 +25,10 @@ export const AuthProvider = ({ children }) => {
         else localStorage.removeItem('correoRecordado');
         return { ok: true, user };
       }
-      return { ok: false, mensaje: data.mensaje };
+      return { ok: false, mensaje: data.detail || data.mensaje || 'Error al iniciar sesión' };
     } catch (err) {
-      return { ok: false, mensaje: 'Error de conexión con el servidor' };
+      console.error("Error de conexión:", err);
+      return { ok: false, mensaje: 'Error de conexión con el servidor en el puerto 8000' };
     }
   };
 
@@ -50,7 +51,7 @@ export const AuthProvider = ({ children }) => {
         localStorage.setItem('usuarioActivo', JSON.stringify(usuarioNuevo));
         return { ok: true };
       }
-      return { ok: false, mensaje: data.mensaje };
+      return { ok: false, mensaje: data.detail || data.mensaje };
     } catch (err) {
       return { ok: false, mensaje: 'Error al conectar con el servidor' };
     }

@@ -22,3 +22,14 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Laravel específicos
+/vendor
+.env
+.env.backup
+.env.production
+/storage/*.key
+/public/storage
+/public/hot
+/bootstrap/cache/*
+!/bootstrap/cache/.gitkeep
