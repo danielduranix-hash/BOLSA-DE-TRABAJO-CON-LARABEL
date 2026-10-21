@@ -95,7 +95,6 @@ def probar_conexion():
     try:
         with psycopg2.connect(**DB_CONFIG) as conn:
             with conn.cursor(cursor_factory=RealDictCursor) as cursor:
-                # Consultamos los correos existentes en la tabla
                 cursor.execute("SELECT correo FROM usuarios;")
                 usuarios = cursor.fetchall()
                 return {
@@ -108,6 +107,7 @@ def probar_conexion():
             "conexion": "Fallida",
             "error": str(err)
         }
+
 # --- ENDPOINT DE LOGIN ---
 @app.post("/api/login")
 def login_usuario(datos: PeticionLogin):
@@ -119,7 +119,6 @@ def login_usuario(datos: PeticionLogin):
     try:
         with psycopg2.connect(**DB_CONFIG) as conn:
             with conn.cursor(cursor_factory=RealDictCursor) as cursor:
-                # Buscamos al usuario únicamente por correo
                 cursor.execute(
                     """
                     SELECT * 
@@ -130,14 +129,11 @@ def login_usuario(datos: PeticionLogin):
                 )
                 usuario = cursor.fetchone()
 
-                # Truncamos a 72 bytes por la limitación de bcrypt
                 password_plano = datos.password.strip()[:72]
 
-                # Si no existe el usuario o la contraseña encriptada NO coincide
                 if not usuario or not pwd_context.verify(password_plano, usuario["password_hash"]):
                     raise HTTPException(status_code=401, detail="Correo o contraseña incorrectos.")
 
-                # Limpiamos el hash de la respuesta por seguridad antes de enviarlo al frontend
                 if "password_hash" in usuario:
                     del usuario["password_hash"]
 
@@ -167,7 +163,6 @@ def registrar_usuario(datos: PeticionRegistro):
                 if cursor.fetchone():
                     raise HTTPException(status_code=400, detail="El correo electrónico ya está registrado.")
 
-                # Truncamos a 72 bytes y encriptamos la contraseña de forma segura
                 password_plano = datos.password.strip()[:72]
                 password_encriptado = pwd_context.hash(password_plano)
 
@@ -183,7 +178,7 @@ def registrar_usuario(datos: PeticionRegistro):
                         datos.primer_apellido.strip() if datos.primer_apellido else "",
                         datos.segundo_apellido.strip() if datos.segundo_apellido else "",
                         correo_clean,
-                        password_encriptado, # <--- Aquí guardamos el hash seguro
+                        password_encriptado,
                         datos.fecha_nacimiento if datos.fecha_nacimiento else None,
                         datos.sexo if datos.sexo else "O"
                     )
@@ -302,7 +297,7 @@ async def mejorar_cv(datos: PeticionMejorar):
                     "Content-Type": "application/json"
                 },
                 json={
-                    "model": "gemma2-9b-it",  
+                    "model": "openai/gpt-oss-20b",  # <--- USAR ESTE MODELO AQUÍ
                     "messages": [
                         {"role": "system", "content": f"{system_prompt} Responde en idioma: {datos.idioma}."},
                         {"role": "user", "content": datos.texto}
@@ -324,6 +319,7 @@ async def mejorar_cv(datos: PeticionMejorar):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error de conexión con Groq: {str(e)}")
 
+    # (Opcional: Guardar historial en BD)
     try:
         with psycopg2.connect(**DB_CONFIG) as conn:
             with conn.cursor() as cursor:
