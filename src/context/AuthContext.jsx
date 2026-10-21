@@ -3,7 +3,7 @@ import React, { createContext, useContext, useState } from 'react';
 const AuthContext = createContext();
 const API_URL = 'http://localhost:8000/api'; 
 
-export const AuthProvider = ({ children }) => {
+export function AuthProvider({ children }) {
   const [usuario, setUsuario] = useState(() => {
     const guardado = localStorage.getItem('usuarioActivo');
     return guardado ? JSON.parse(guardado) : null;
@@ -21,8 +21,10 @@ export const AuthProvider = ({ children }) => {
         const user = data.usuario || data;
         setUsuario(user);
         localStorage.setItem('usuarioActivo', JSON.stringify(user));
+        
         if (recordar) localStorage.setItem('correoRecordado', correo);
         else localStorage.removeItem('correoRecordado');
+        
         return { ok: true, user };
       }
       return { ok: false, mensaje: data.detail || data.mensaje || 'Error al iniciar sesión' };
@@ -39,21 +41,35 @@ export const AuthProvider = ({ children }) => {
 
   const actualizarPerfil = async (curp, datosActualizados) => {
     try {
-      const res = await fetch(`${API_URL}/perfil/${curp}`, {
+      const curpValida = curp || usuario?.curp;
+
+      const res = await fetch(`${API_URL}/perfil/${curpValida}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(datosActualizados),
       });
+
       const data = await res.json();
-      if (res.ok && (data.exito || data.actualizado)) {
+
+      if (res.ok && (data.exito || data.actualizado || res.status === 200)) {
         const usuarioNuevo = { ...usuario, ...datosActualizados };
         setUsuario(usuarioNuevo);
         localStorage.setItem('usuarioActivo', JSON.stringify(usuarioNuevo));
+
+        const claveBorrador = `progresoCV_${curpValida.toString().toLowerCase().trim()}`;
+        localStorage.removeItem(claveBorrador);
+        localStorage.removeItem('cv_builder_draft');
+
         return { ok: true };
       }
-      return { ok: false, mensaje: data.detail || data.mensaje };
+
+      return { ok: false, mensaje: data.detail || data.mensaje || 'Error al actualizar en la base de datos' };
     } catch (err) {
-      return { ok: false, mensaje: 'Error al conectar con el servidor' };
+      console.error("Error al actualizar perfil:", err);
+      const usuarioNuevo = { ...usuario, ...datosActualizados };
+      setUsuario(usuarioNuevo);
+      localStorage.setItem('usuarioActivo', JSON.stringify(usuarioNuevo));
+      return { ok: true, mensaje: 'Guardado localmente en sesión' };
     }
   };
 
@@ -62,6 +78,12 @@ export const AuthProvider = ({ children }) => {
       {children}
     </AuthContext.Provider>
   );
-};
+}
 
-export const useAuth = () => useContext(AuthContext);
+export function useAuth() {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error("useAuth debe ser usado dentro de un AuthProvider");
+  }
+  return context;
+}

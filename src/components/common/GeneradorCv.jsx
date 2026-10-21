@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { useAuth } from "../../context/AuthContext";
 import "../../styles/formulario-cv.css";
 
 // 1. DICCIONARIOS Y CONFIGURACIÓN GLOBAL
@@ -21,12 +22,12 @@ const TITULOS_PASOS = [
   "7. Elige el diseño de tu CV"
 ];
 
-// Obtención limpia de la clave de LocalStorage
-const getStorageKey = () => {
-  const usuarioGuardado = localStorage.getItem("usuarioActivo") || sessionStorage.getItem("usuarioActivo");
+// Obtención limpia de la clave de LocalStorage según el usuario
+const getStorageKey = (usuarioCtx) => {
+  const usuarioGuardado = usuarioCtx || localStorage.getItem("usuarioActivo") || localStorage.getItem("usuario") || sessionStorage.getItem("usuarioActivo");
   if (usuarioGuardado) {
     try {
-      const user = JSON.parse(usuarioGuardado);
+      const user = typeof usuarioGuardado === "string" ? JSON.parse(usuarioGuardado) : usuarioGuardado;
       const idUnico = user.curp || user.correo || user.id;
       if (idUnico) return `progresoCV_${idUnico.toString().toLowerCase().trim()}`;
     } catch (e) {
@@ -37,6 +38,8 @@ const getStorageKey = () => {
 };
 
 export default function GeneradorCv() {
+  const { usuario } = useAuth();
+
   // 2. ESTADOS
   const [pasoActual, setPasoActual] = useState(1);
   const [loadingAI, setLoadingAI] = useState(false);
@@ -67,15 +70,15 @@ export default function GeneradorCv() {
     idiomas: [{ nombre: "Español", nivel: "Nativo" }]
   });
 
-  // Referencia para mantener una foto actualizada del estado al desmontar/recargar la página
+  // Referencia para mantener una foto actualizada del estado al desmontar/recargar
   const stateRef = useRef({ formData, pasoActual });
   useEffect(() => {
     stateRef.current = { formData, pasoActual };
   }, [formData, pasoActual]);
 
-  // Cargar borrador o autocompletar datos al montar
+  // Cargar borrador o sincronizar con TODOS los datos del perfil del usuario
   useEffect(() => {
-    const key = getStorageKey();
+    const key = getStorageKey(usuario);
     const draft = localStorage.getItem(key);
 
     if (draft) {
@@ -87,30 +90,74 @@ export default function GeneradorCv() {
       } catch (e) {
         console.error("Error restaurando borrador:", e);
       }
-    } else {
-      const usuarioGuardado = localStorage.getItem("usuarioActivo") || sessionStorage.getItem("usuarioActivo");
-      if (usuarioGuardado) {
-        try {
-          const user = JSON.parse(usuarioGuardado);
-          const nombreCompleto = `${user.nombre || ""} ${user.primer_apellido || ""} ${user.segundo_apellido || ""}`.trim();
-          setFormData((prev) => ({
-            ...prev,
-            nombre: user.nombre || nombreCompleto,
-            correo: user.correo || "",
-            telefono: user.celular || user.telefono_fijo || ""
-          }));
-        } catch (e) {
-          console.error("Error autocompletando datos:", e);
-        }
-      }
     }
-  }, []);
+
+    // Obtener objeto usuario desde AuthContext o storage
+    const userObjeto = usuario || (() => {
+      try {
+        return JSON.parse(
+          localStorage.getItem("usuarioActivo") ||
+          localStorage.getItem("usuario") ||
+          sessionStorage.getItem("usuarioActivo")
+        );
+      } catch (e) {
+        return null;
+      }
+    })();
+
+    if (userObjeto) {
+      // Unir apellidos si vienen separados de la BD
+      const apellidosCompletos = userObjeto.apellidos || 
+        `${userObjeto.primer_apellido || ""} ${userObjeto.segundo_apellido || ""}`.trim();
+      
+      // Sincronización completa de TODOS los apartados del perfil al CV
+      setFormData((prev) => ({
+        ...prev,
+        nombre: userObjeto.nombre || prev.nombre,
+        apellidos: apellidosCompletos || prev.apellidos,
+        correo: userObjeto.correo || prev.correo,
+        telefono: userObjeto.celular || userObjeto.telefono || userObjeto.telefono_fijo || prev.telefono,
+        localidad: userObjeto.poblacion || userObjeto.colonia || prev.localidad,
+        fechaNacimiento: userObjeto.fecha_nacimiento || userObjeto.fechaNacimiento || prev.fechaNacimiento,
+        
+        // Apartados avanzados vinculados directamente con el perfil:
+        profesion: userObjeto.profesion || userObjeto.ultimo_puesto || prev.profesion,
+        perfilProfesional: userObjeto.perfil_profesional || userObjeto.experiencia_detalle || prev.perfilProfesional,
+        expEmpresa: userObjeto.ultimo_empresa || prev.expEmpresa,
+        expPuesto: userObjeto.ultimo_puesto || prev.expPuesto,
+        expFechas: userObjeto.ultimo_funciones_tiempo || prev.expFechas,
+        experienciaTexto: userObjeto.experiencia_detalle || prev.experienciaTexto,
+        formacionTexto: userObjeto.formacion_detalle || userObjeto.estudios_profesion || prev.formacionTexto,
+        competenciasTexto: userObjeto.habilidades_detalle || userObjeto.conocimientos_generales || prev.competenciasTexto,
+        actividadesTexto: userObjeto.actividades_texto || prev.actividadesTexto,
+        linkedin: userObjeto.linkedin || prev.linkedin,
+        github: userObjeto.github || prev.github,
+      }));
+    }
+  }, [usuario]);
 
   // Guardar en LocalStorage cada vez que cambien los datos o el paso
   useEffect(() => {
-    const key = getStorageKey();
+    const key = getStorageKey(usuario);
     localStorage.setItem(key, JSON.stringify({ ...formData, pasoActual }));
-  }, [formData, pasoActual]);
+  }, [formData, pasoActual, usuario]);
+
+  // Forzar el guardado al salir o recargar la página
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      const key = getStorageKey(usuario);
+      localStorage.setItem(key, JSON.stringify({
+        ...stateRef.current.formData,
+        pasoActual: stateRef.current.pasoActual
+      }));
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+      handleBeforeUnload(); 
+    };
+  }, [usuario]);
 
   // Forzar el guardado cuando el usuario cierra o navega fuera de la pestaña
   useEffect(() => {
@@ -173,7 +220,7 @@ export default function GeneradorCv() {
     });
   };
 
-  // Optimización con IA (Conectado a FastAPI en puerto 8000)
+  // Optimización con IA (FastAPI)
   const optimizarConIA = async (fieldTarget, seccion) => {
     const textoOriginal = formData[fieldTarget]?.trim();
     if (!textoOriginal) {
@@ -197,7 +244,7 @@ export default function GeneradorCv() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           texto: textoOriginal,
-          seccion: seccion, // Coincide con las claves que espera FastAPI
+          seccion: seccion,
           idioma: formData.idiomaCv
         })
       });
@@ -622,7 +669,7 @@ export default function GeneradorCv() {
                 <h3>{t.idio}</h3>
                 <ul className="cv-list">
                   {formData.idiomas.map((item, idx) => (
-                    <li key={idx}>{item.nombre} - {item.nivel}</li>
+                    <li key={idx}><strong>{item.nombre}:</strong> {item.nivel}</li>
                   ))}
                 </ul>
               </div>
