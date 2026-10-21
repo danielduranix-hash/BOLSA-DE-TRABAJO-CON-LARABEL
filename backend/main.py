@@ -107,7 +107,6 @@ def probar_conexion():
             "conexion": "Fallida",
             "error": str(err)
         }
-
 # --- ENDPOINT DE LOGIN ---
 @app.post("/api/login")
 def login_usuario(datos: PeticionLogin):

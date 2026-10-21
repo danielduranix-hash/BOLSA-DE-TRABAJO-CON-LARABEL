@@ -159,6 +159,23 @@ export default function GeneradorCv() {
     };
   }, [usuario]);
 
+  // Forzar el guardado cuando el usuario cierra o navega fuera de la pestaña
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      const key = getStorageKey();
+      localStorage.setItem(key, JSON.stringify({
+        ...stateRef.current.formData,
+        pasoActual: stateRef.current.pasoActual
+      }));
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+      handleBeforeUnload(); 
+    };
+  }, []);
+
   // Manejador de entradas de texto
   const handleChange = (e) => {
     const { name, value } = e.target;
